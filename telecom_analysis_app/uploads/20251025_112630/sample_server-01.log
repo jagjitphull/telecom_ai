@@ -1,0 +1,18 @@
+Oct 23 09:55:00 server-01 systemd[1]: Started Network Router Service.
+Oct 23 09:55:05 server-01 router: [INFO] All interfaces operational
+Oct 23 10:00:58 server-01 kernel: [12340.123] WARNING: eth0 high packet loss detected
+Oct 23 10:01:10 server-01 kernel: [12345.678] CRITICAL: interface eth0 down
+Oct 23 10:01:12 server-01 router: [ERROR] Lost BGP session to peer 192.168.1.1
+Oct 23 10:01:15 server-01 router: [WARN] High packet loss detected on uplink
+Oct 23 10:01:20 server-01 systemd[1]: network-router.service: Main process exited, code=exited, status=1/FAILURE
+Oct 23 10:03:45 server-01 systemd[1]: Started Network Router Service.
+Oct 23 10:03:50 server-01 kernel: [12450.890] interface eth0 up
+Oct 23 10:03:55 server-01 router: [INFO] BGP session established with peer 192.168.1.1
+Oct 23 10:05:00 server-01 router: [INFO] All routing tables synchronized
+Oct 23 14:00:00 server-02 kernel: [45000.123] WARNING: High CPU utilization on interface eth2
+Oct 23 14:01:30 server-02 kernel: [45090.456] WARNING: ping_timeout to 10.20.30.40 (T-850 backhaul)
+Oct 23 14:03:00 server-02 kernel: [45180.789] WARNING: high_jitter detected on link to T-850
+Oct 23 14:05:45 server-02 kernel: [45345.012] WARNING: ping_timeout to 10.20.30.41 (T-851 backhaul)
+Oct 23 14:08:20 server-02 kernel: [45500.234] ERROR: packet_delay exceeds 2000ms on RAN segment
+Oct 23 14:12:00 server-02 kernel: [45720.456] WARNING: high_jitter detected on link to T-851
+Oct 23 14:30:00 server-02 kernel: [46800.678] INFO: Network conditions returning to normal

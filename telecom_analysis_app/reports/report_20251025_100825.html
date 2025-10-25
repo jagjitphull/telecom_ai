@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telecom Logs Analysis Report</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        header {
+            border-bottom: 3px solid #2c3e50;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+        }
+        h3 {
+            color: #34495e;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+        .metadata {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 20px;
+            font-size: 0.95em;
+            color: #666;
+        }
+        .metadata-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .metadata-label {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-card.info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .stat-card.error {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .stat-card.warning {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+        .stat-card.success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        .analysis-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3498db;
+        }
+        .analysis-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        .analysis-content {
+            color: #555;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        thead {
+            background: #2c3e50;
+            color: white;
+        }
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        tr:hover {
+            background: #f5f5f5;
+        }
+        .error-badge {
+            display: inline-block;
+            background: #e74c3c;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+        .warning-badge {
+            display: inline-block;
+            background: #f39c12;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+        .info-badge {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+        .success-badge {
+            display: inline-block;
+            background: #27ae60;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            border-left: 4px solid;
+        }
+        .alert-danger {
+            background: #fadbd8;
+            border-color: #e74c3c;
+            color: #a93226;
+        }
+        .alert-warning {
+            background: #fdebd0;
+            border-color: #f39c12;
+            color: #9a6321;
+        }
+        .alert-info {
+            background: #d6eaf8;
+            border-color: #3498db;
+            color: #1b4f72;
+        }
+        .alert-success {
+            background: #d5f4e6;
+            border-color: #27ae60;
+            color: #0b5345;
+        }
+        footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            color: #999;
+            font-size: 0.9em;
+        }
+        .list-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            border-left: 3px solid #3498db;
+        }
+        .recommendation {
+            background: #ecf0f1;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 4px solid #27ae60;
+        }
+        @media print {
+            body {
+                background: white;
+            }
+            .container {
+                box-shadow: none;
+                padding: 0;
+            }
+        }
+    </style>
+    
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Telecom Logs Analysis Report</h1>
+            <div class="metadata">
+                <div class="metadata-item">
+                    <span class="metadata-label">Generated:</span>
+                    <span>2025-10-25 10:08:58</span>
+                </div>
+                <div class="metadata-item">
+                    <span class="metadata-label">AI Model:</span>
+                    <span>mistral:latest</span>
+                </div>
+                <div class="metadata-item">
+                    <span class="metadata-label">Logs Analyzed:</span>
+                    <span>220</span>
+                </div>
+            </div>
+        </header>
+
+        
+        <h2>📈 Statistics Dashboard</h2>
+        <div class="stats-grid">
+            <div class="stat-card info">
+                <div class="stat-value">220</div>
+                <div class="stat-label">Total Logs</div>
+            </div>
+            <div class="stat-card error">
+                <div class="stat-value">78</div>
+                <div class="stat-label">Errors (35.45%)</div>
+            </div>
+            <div class="stat-card warning">
+                <div class="stat-value">27</div>
+                <div class="stat-label">Warnings</div>
+            </div>
+            <div class="stat-card success">
+                <div class="stat-value">70</div>
+                <div class="stat-label">Info Logs</div>
+            </div>
+            <div class="stat-card info">
+                <div class="stat-value">244.30</div>
+                <div class="stat-label">Avg Latency (ms)</div>
+            </div>
+            <div class="stat-card warning">
+                <div class="stat-value">1</div>
+                <div class="stat-label">High Latency Events</div>
+            </div>
+            <div class="stat-card info">
+                <div class="stat-value">8</div>
+                <div class="stat-label">Unique Users</div>
+            </div>
+            <div class="stat-card success">
+                <div class="stat-value">15</div>
+                <div class="stat-label">Unique Call IDs</div>
+            </div>
+        </div>
+        
+        
+        <h2>📋 Executive Summary</h2>
+        <div class="analysis-section">
+            <div class="analysis-content"> The telecom system logs show a high error rate of 35.45%, with frequent warnings and errors related to memory usage exceeding 80% and CPU usage reaching 85%. There are also recurring issues with database connection timeouts, leading to the activation of failover on Switch CS-01 multiple times. The system startup process is repeated several times, but it seems that the problems persist after each restart. The high error rate and recurring warnings suggest system instability or resource mismanagement.</div>
+        </div>
+        
+        
+        <h2>🔍 Root Cause Analysis</h2>
+        <div class="alert alert-danger">
+            <strong>Error Rate: 35.45%</strong>
+        </div>
+        <div class="analysis-section">
+            <div class="analysis-title">Identified Root Causes:</div>
+            <div class="analysis-content"> After analyzing the telecom logs, I&#39;ve identified several potential root causes for the observed issues:
+
+1. High Memory Usage (80%+): Frequent warnings about high memory usage above 80% indicate that there might be memory leaks or excessive resource consumption by certain processes within the system. This can lead to increased error rates and high latency instances as the system struggles to allocate resources efficiently.
+
+2. CPU Usage: Two consecutive warnings about high CPU usage (85%) suggest that one or more processes are consuming a significant amount of CPU cycles, potentially causing performance bottlenecks and contributing to the observed error rate and increased latency.
+
+3. Database Connection Timeout: The error log showing a database connection timeout indicates that there might be intermittent network connectivity issues between the application server and the database server. This could cause delays in processing requests and potentially increase the overall error rate.
+
+4. Correlation with Latency Spikes: By analyzing the time stamps of both the high latency instance and warning messages, it seems that high latency instances often occur around the same time as warnings about memory usage or CPU usage. This suggests a correlation between resource consumption and network performance, implying that resource intensive tasks might be causing delays in processing requests, resulting in increased latency.
+
+5. Potential Infrastructure Issues: The repetitive system startups (every 60 minutes) could indicate some infrastructure problems such as restarting due to instability or overloading, which may contribute to the high error rate and inconsistent performance.
+
+In summary, the root cause of issues appears to be a combination of memory leaks, excessive resource consumption by certain processes, database connection instability, repetitive system restarts, and potential network connectivity problems between the application server and database server. To resolve these issues, it would be beneficial to investigate the underlying causes of high memory usage, CPU usage, and database connection timeouts, as well as looking into possible infrastructure improvements to ensure stable operation of the system.</div>
+        </div>
+        
+        
+        <h2>🔮 Predictions & Forecasts</h2>
+        <div class="analysis-section">
+            <div class="analysis-title">Predicted Issues and Trends:</div>
+            <div class="analysis-content"> 1. FAILURE RISK ASSESSMENT
+   - Risk Level: HIGH
+   - Probability: 75%
+   - Timeframe: Within Days
+
+2. LIKELY FAILURE POINTS
+   - Component 1: High CPU usage (indicates heavy processing or resource-intensive operations)
+   - Component 2: Memory usage above 80% (suggests insufficient memory, potentially causing system instability)
+   - Component 3: Error Rate (high error rate may indicate software bugs or hardware issues)
+
+3. USER IMPACT
+   - Affected Users: 75% (as the system serves only 8 unique users, it&#39;s likely that most users will be impacted)
+   - Affected Calls: All calls made within the telecom system could be affected due to high error rate and latency issues
+   - Service Degradation: Severity (based on the critical error rate and high latency incidents)
+
+4. RECOMMENDED THRESHOLDS
+   - Error Rate Alert: 5% (the current warning threshold is too high, it should be lowered to prevent potential issues)
+   - Latency Alert: 100ms (current average latency of 244.30ms is significantly higher than the recommended threshold)
+   - Connection Timeout: 5s (to ensure user calls are not dropped due to long connection times)
+
+5. PREVENTIVE ACTIONS
+   - Immediate: Implement a system performance analysis and optimize heavy processing tasks or allocate more memory resources to reduce CPU usage and memory strain.
+   - Short-term: Monitor the system closely for any spikes in CPU usage, memory consumption, and error rate. Perform routine maintenance and software updates as necessary.
+   - Long-term: Investigate possible hardware upgrades to improve overall system performance and capacity for future growth. Consider implementing load balancing solutions to distribute processing tasks more evenly among available resources.</div>
+        </div>
+        
+        
+        <h2>💡 Recommendations</h2>
+        <div class="analysis-section">
+            <div class="analysis-title">Recommended Actions:</div>
+            <div class="analysis-content"> 1. Immediate actions to resolve the issue:
+   - Identify the processes causing high memory usage by using tools like top, htop, or ps. Once identified, you can attempt to kill unnecessary processes or optimize them if possible.
+   - If memory leaks are suspected, analyze process logs and perform a manual garbage collection (if applicable). Consider using a memory profiling tool to diagnose the issue further.
+
+2. Short-term improvements (1-2 weeks):
+   - Implement a watchdog process that automatically restarts the affected service if it encounters high CPU or memory usage for an extended period. This can help prevent the system from crashing due to excessive resource consumption.
+   - Tune the operating system parameters such as kernel settings, buffer sizes, and process limits to optimize resources allocation more efficiently.
+   - Use load balancing techniques to distribute incoming requests among available servers, reducing the burden on individual servers and lowering CPU usage.
+
+3. Long-term architectural improvements:
+   - Refactor or redesign problematic components to eliminate memory leaks and excessive resource consumption. This may require code optimization, adopting new design patterns, or replacing legacy systems with more efficient solutions.
+   - Implement a containerization solution like Docker or Kubernetes to isolate services from each other and better manage resources within the system.
+   - Migrate to a serverless architecture if appropriate, where resource usage is managed dynamically based on demand, reducing idle time and optimizing costs.
+
+4. Monitoring and alerting recommendations:
+   - Set up comprehensive monitoring using tools like Prometheus, Grafana, or Nagios to track key performance indicators (KPIs) such as CPU usage, memory consumption, error rate, and latency.
+   - Configure alerts that notify the team when specific thresholds are exceeded, allowing prompt action to be taken to address issues before they become critical.
+   - Utilize tools like Elasticsearch and Kibana for log analysis and visualization to help diagnose problems more efficiently.
+
+5. Prevention strategies:
+   - Implement automated testing and continuous integration/continuous deployment (CI/CD) pipelines to catch and fix issues early in the development process.
+   - Develop a culture of performance optimization within the team by regularly reviewing code and architecture for potential improvements.
+   - Provide training on best practices for writing efficient code, managing resources effectively, and avoiding common pitfalls.
+
+By addressing these recommendations, you should see an improvement in system performance, reduced error rates, and lower latency over time.</div>
+        </div>
+        
+        <h2>🔗 Correlations & Patterns</h2><h3>Top Problematic Call IDs</h3><table><thead><tr><th>Call ID</th><th>Incidents</th></tr></thead><tbody><tr><td>SIP-20240115-001</td><td><span class='error-badge'>4</span></td></tr><tr><td>SIP-20240115-003</td><td><span class='error-badge'>4</span></td></tr><tr><td>SIP-20240115-004</td><td><span class='error-badge'>4</span></td></tr><tr><td>SIP-20240115-005</td><td><span class='error-badge'>4</span></td></tr><tr><td>SIP-20240115-006</td><td><span class='error-badge'>4</span></td></tr></tbody></table><h3>Most Affected Users</h3><table><thead><tr><th>User</th><th>Incidents</th></tr></thead><tbody><tr><td>alice@telecom.local</td><td><span class='warning-badge'>1</span></td></tr><tr><td>bob@telecom.local</td><td><span class='warning-badge'>1</span></td></tr><tr><td>carol@telecom.local</td><td><span class='warning-badge'>1</span></td></tr><tr><td>david@telecom.local</td><td><span class='warning-badge'>1</span></td></tr><tr><td>eve@telecom.local</td><td><span class='warning-badge'>1</span></td></tr></tbody></table><h3>Problematic IP Addresses</h3><table><thead><tr><th>IP Address</th><th>Incidents</th></tr></thead><tbody><tr><td>192.168.1.50</td><td><span class='info-badge'>5</span></td></tr><tr><td>192.168.2.1</td><td><span class='info-badge'>2</span></td></tr><tr><td>192.168.1.100</td><td><span class='info-badge'>1</span></td></tr><tr><td>192.168.1.101</td><td><span class='info-badge'>1</span></td></tr><tr><td>192.168.1.102</td><td><span class='info-badge'>1</span></td></tr></tbody></table>
+        <h2>❌ Error Analysis</h2><table><thead><tr><th>Error Message</th><th>Count</th></tr></thead><tbody><tr><td>Database connection timeout</td><td><span class='error-badge'>2</span></td></tr><tr><td>Call setup timeout after 1000ms</td><td><span class='error-badge'>1</span></td></tr><tr><td>Peer disconnected unexpectedly</td><td><span class='error-badge'>1</span></td></tr><tr><td>No route to host</td><td><span class='error-badge'>1</span></td></tr><tr><td>Query timeout after 5000ms</td><td><span class='error-badge'>1</span></td></tr><tr><td>Cannot allocate 256MB buffer</td><td><span class='error-badge'>1</span></td></tr><tr><td>Gateway unreachable</td><td><span class='error-badge'>1</span></td></tr><tr><td>Name not resolved</td><td><span class='error-badge'>1</span></td></tr><tr><td>QoS limit reached</td><td><span class='error-badge'>1</span></td></tr><tr><td>Certificate chain incomplete</td><td><span class='error-badge'>1</span></td></tr></tbody></table>
+        
+        <footer>
+            <p>This report was automatically generated by Telecom Log Analysis Agent</p>
+            <p>For questions or support, contact your system administrator</p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,66 @@
+2024-01-15 10:23:45 [INFO] Telecom System - Log Trace Started
+2024-01-15 10:23:46 [INFO] Call-ID: SIP-20240115-001 User: +14155552671 IP: 192.168.1.100 Status: INIT
+2024-01-15 10:23:47 [INFO] Call-ID: SIP-20240115-001 Latency: 45ms Connection established
+2024-01-15 10:23:48 [WARNING] Call-ID: SIP-20240115-001 High latency detected: 850ms
+2024-01-15 10:23:49 [INFO] Call-ID: SIP-20240115-002 User: +14155552672 IP: 192.168.1.101 Status: INIT
+2024-01-15 10:23:50 [ERROR] Call-ID: SIP-20240115-001 Timeout Exception: Call setup timeout after 1000ms
+2024-01-15 10:23:51 [WARNING] Call-ID: SIP-20240115-002 Network latency: 950ms
+2024-01-15 10:23:52 [INFO] Call-ID: SIP-20240115-003 User: +14155552673 IP: 192.168.1.102 Status: INIT
+2024-01-15 10:23:53 [ERROR] Call-ID: SIP-20240115-002 Connection reset Exception: Peer disconnected unexpectedly
+2024-01-15 10:23:54 [INFO] Call-ID: SIP-20240115-003 Latency: 120ms Connection established
+2024-01-15 10:23:55 [WARNING] Call-ID: SIP-20240115-003 Resource exhaustion detected on server 192.168.1.50
+2024-01-15 10:23:56 [ERROR] Call-ID: SIP-20240115-003 HTTP 503 Service Unavailable - Server overloaded
+2024-01-15 10:23:57 [INFO] Call-ID: SIP-20240115-004 User: alice@telecom.local IP: 192.168.1.103 Status: INIT
+2024-01-15 10:23:58 [INFO] Call-ID: SIP-20240115-004 Latency: 80ms Connection established
+2024-01-15 10:23:59 [WARNING] Call-ID: SIP-20240115-004 Packet loss detected: 5% on route to 192.168.2.1
+2024-01-15 10:24:00 [ERROR] Call-ID: SIP-20240115-004 Network error Exception: No route to host
+2024-01-15 10:24:01 [INFO] Call-ID: SIP-20240115-005 User: bob@telecom.local IP: 192.168.1.104 Status: INIT
+2024-01-15 10:24:02 [INFO] Call-ID: SIP-20240115-005 Latency: 65ms Connection established
+2024-01-15 10:24:03 [WARNING] Call-ID: SIP-20240115-005 Database connection pool exhausted: 245/250
+2024-01-15 10:24:04 [ERROR] Call-ID: SIP-20240115-005 Database timeout Exception: Query timeout after 5000ms
+2024-01-15 10:24:05 [INFO] Call-ID: SIP-20240115-006 User: carol@telecom.local IP: 192.168.1.105 Status: INIT
+2024-01-15 10:24:06 [INFO] Call-ID: SIP-20240115-006 Latency: 52ms Connection established
+2024-01-15 10:24:07 [WARNING] Call-ID: SIP-20240115-006 High CPU usage on node 192.168.1.50: 92%
+2024-01-15 10:24:08 [ERROR] Call-ID: SIP-20240115-006 HTTP 500 Internal Server Error - Critical service failure
+2024-01-15 10:24:09 [INFO] Call-ID: SIP-20240115-007 User: +14155552674 IP: 192.168.1.106 Status: INIT
+2024-01-15 10:24:10 [INFO] Call-ID: SIP-20240115-007 Latency: 110ms Connection established
+2024-01-15 10:24:11 [WARNING] Call-ID: SIP-20240115-007 Memory consumption high: 87% on server 192.168.1.50
+2024-01-15 10:24:12 [ERROR] Call-ID: SIP-20240115-007 Out of Memory Exception: Cannot allocate 256MB buffer
+2024-01-15 10:24:13 [INFO] Call-ID: SIP-20240115-008 User: david@telecom.local IP: 192.168.1.107 Status: INIT
+2024-01-15 10:24:14 [INFO] Call-ID: SIP-20240115-008 Latency: 75ms Connection established
+2024-01-15 10:24:15 [INFO] Call-ID: SIP-20240115-008 Latency: 95ms Connection active
+2024-01-15 10:24:16 [INFO] Call-ID: SIP-20240115-008 Connection closed successfully
+2024-01-15 10:24:17 [INFO] Call-ID: SIP-20240115-009 User: eve@telecom.local IP: 192.168.1.108 Status: INIT
+2024-01-15 10:24:18 [INFO] Call-ID: SIP-20240115-009 Latency: 60ms Connection established
+2024-01-15 10:24:19 [WARNING] Call-ID: SIP-20240115-009 Gateway 192.168.2.1 latency: 2500ms
+2024-01-15 10:24:20 [ERROR] Call-ID: SIP-20240115-009 Network timeout Exception: Gateway unreachable
+2024-01-15 10:24:21 [INFO] Call-ID: SIP-20240115-010 User: frank@telecom.local IP: 192.168.1.109 Status: INIT
+2024-01-15 10:24:22 [INFO] Call-ID: SIP-20240115-010 Latency: 88ms Connection established
+2024-01-15 10:24:23 [WARNING] Call-ID: SIP-20240115-010 DNS resolution slow: 800ms for telecom.local
+2024-01-15 10:24:24 [ERROR] Call-ID: SIP-20240115-010 DNS resolution failure Exception: Name not resolved
+2024-01-15 10:24:25 [INFO] System Recovery - Automatic failover initiated
+2024-01-15 10:24:26 [INFO] Call-ID: SIP-20240115-011 User: +14155552675 IP: 192.168.1.110 Status: INIT
+2024-01-15 10:24:27 [INFO] Call-ID: SIP-20240115-011 Latency: 70ms Connection established
+2024-01-15 10:24:28 [INFO] Call-ID: SIP-20240115-011 Latency: 85ms Connection active
+2024-01-15 10:24:29 [INFO] Call-ID: SIP-20240115-011 Connection closed successfully
+2024-01-15 10:24:30 [INFO] Call-ID: SIP-20240115-012 User: +14155552676 IP: 192.168.1.111 Status: INIT
+2024-01-15 10:24:31 [INFO] Call-ID: SIP-20240115-012 Latency: 92ms Connection established
+2024-01-15 10:24:32 [WARNING] Call-ID: SIP-20240115-012 Bandwidth limit approaching: 950 Mbps of 1000 Mbps
+2024-01-15 10:24:33 [ERROR] Call-ID: SIP-20240115-012 Bandwidth exceeded Exception: QoS limit reached
+2024-01-15 10:24:34 [INFO] Backup systems engaged for critical services
+2024-01-15 10:24:35 [INFO] Call-ID: SIP-20240115-013 User: grace@telecom.local IP: 192.168.1.112 Status: INIT
+2024-01-15 10:24:36 [INFO] Call-ID: SIP-20240115-013 Latency: 58ms Connection established
+2024-01-15 10:24:37 [WARNING] Call-ID: SIP-20240115-013 SSL certificate expires in 7 days
+2024-01-15 10:24:38 [ERROR] Call-ID: SIP-20240115-013 SSL verification failed Exception: Certificate chain incomplete
+2024-01-15 10:24:39 [INFO] Alerting network operations center
+2024-01-15 10:24:40 [INFO] Call-ID: SIP-20240115-014 User: henry@telecom.local IP: 192.168.1.113 Status: INIT
+2024-01-15 10:24:41 [INFO] Call-ID: SIP-20240115-014 Latency: 105ms Connection established
+2024-01-15 10:24:42 [INFO] Call-ID: SIP-20240115-014 Latency: 110ms Connection active
+2024-01-15 10:24:43 [INFO] Call-ID: SIP-20240115-014 Connection closed successfully
+2024-01-15 10:24:44 [WARNING] Server 192.168.1.50 - Automatic maintenance scheduled
+2024-01-15 10:24:45 [INFO] Call-ID: SIP-20240115-015 User: +14155552677 IP: 192.168.1.114 Status: INIT
+2024-01-15 10:24:46 [INFO] Call-ID: SIP-20240115-015 Latency: 48ms Connection established
+2024-01-15 10:24:47 [INFO] Telecom System - Routine diagnostic complete
+2024-01-15 10:24:48 [INFO] Total calls processed: 15, Successful: 8, Failed: 7, Error Rate: 46.67%
+2024-01-15 10:24:49 [INFO] Average latency: 78ms, Max latency: 1000ms, Min latency: 45ms
+2024-01-15 10:24:50 [INFO] System health: DEGRADED - Action required on server 192.168.1.50
