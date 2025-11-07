@@ -15,7 +15,8 @@ For **macOS M1/M2/M3 (Apple Silicon)** — fully compatible with **CPU/Metal bac
 ```python
 # Install lightweight compatible packages (M1/M2/M3)
 !pip install -q torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-!pip install -q transformers peft bitsandbytes datasets optuna accelerate
+!pip install -q transformers=4.43.1 peft bitsandbytes datasets optuna accelerate
+
 
 # Check Apple Metal (MPS) availability
 import torch
