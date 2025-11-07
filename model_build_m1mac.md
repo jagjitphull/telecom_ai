@@ -1,97 +1,74 @@
-`Bias_FineTuning_TinyLLaMA_Ollama.ipynb` — written **cell by cell** exactly as it would appear in Jupyter, with **code, explanations, and module references** for your **M1 Mac** (Apple Silicon).
-Everything runs natively on Metal (`mps`) and integrates with Ollama for deployment.
+For **macOS M1/M2/M3 (Apple Silicon)** — fully compatible with **CPU/Metal backend**, **TinyLLaMA model**, **LoRA fine-tuning**, **Optuna hyperparameter tuning**, and a **custom bias evaluator** (since `bias-bench` isn’t available on ARM).
+
+**copy and paste directly into Jupyter Notebook or VS Code** — every section is commented clearly.
 
 ---
 
-# 🧠 Bias Fine-Tuning of TinyLLaMA + Deployment to Ollama
+# 🧠 Bias Fine-Tuning of TinyLLaMA on macOS (M1/M2/M3)
 
-> Target System: Apple M1 / M2 / M3 (macOS with Metal)
-> Model: `TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T`
-> Purpose: Demonstrate bias mitigation + hyperparameter tuning + Ollama packaging
+> Reduce bias → fine-tune → tune hyperparameters → evaluate → prepare for Ollama deployment
 
 ---
 
-## 🧩 Step 1: Environment Setup (M1 Compatible)
+## 🧩 Step 1 — Install & Setup Environment
 
 ```python
-# Install core libraries
-#!pip install -q torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu
-#!pip install -q transformers peft bitsandbytes datasets optuna bias-bench accelerate
-
+# Install lightweight compatible packages (M1/M2/M3)
 !pip install -q torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 !pip install -q transformers peft bitsandbytes datasets optuna accelerate
 
-
-# Check for Metal backend
+# Check Apple Metal (MPS) availability
 import torch
 if torch.backends.mps.is_available():
     device = torch.device("mps")
     print("✅ Using Apple Metal (MPS) acceleration")
 else:
     device = torch.device("cpu")
-    print("⚠️ MPS not available, using CPU")
+    print("⚠️ MPS not available, using CPU instead")
 ```
-
-### 🔍 Explanation:
-
-* **`torch.backends.mps.is_available()`** → detects Apple Metal backend.
-* **`transformers`** → Hugging Face library for loading and fine-tuning models.
-* **`peft`** → Parameter-Efficient Fine-Tuning (LoRA adapters).
-* **`optuna`** → automatic hyperparameter optimization.
-* **`bias-bench`** → evaluation toolkit for bias/fairness benchmarks.
 
 ---
 
-## 🧠 Step 2: Import All Required Modules
+## 🧠 Step 2 — Import Required Modules
 
 ```python
+import os
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainingArguments
 from datasets import Dataset
 from peft import get_peft_model, LoraConfig, TaskType
 import optuna
-from bias_bench import evaluate_model
-import os
+from tqdm import tqdm
 ```
-
-### 🔍 Explanation:
-
-| Module                 | Purpose                                          |
-| ---------------------- | ------------------------------------------------ |
-| `AutoModelForCausalLM` | Loads a causal language model (TinyLlama).       |
-| `AutoTokenizer`        | Converts text → tokens → tensors.                |
-| `Dataset`              | Handles dataset creation and splits.             |
-| `get_peft_model`       | Applies LoRA adapters for efficient fine-tuning. |
-| `optuna`               | Automates hyperparameter search.                 |
-| `evaluate_model`       | Measures bias via predefined datasets.           |
 
 ---
 
-## 🧩 Step 3: Load TinyLlama Model and Tokenizer
+## 🧱 Step 3 — Load Base Model (TinyLLaMA)
 
 ```python
 model_name = "TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T"
+
+# Load tokenizer
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
+# Load model (use 8-bit weights for memory efficiency)
 model = AutoModelForCausalLM.from_pretrained(model_name, low_cpu_mem_usage=True)
+
+# Move to Apple GPU (MPS)
 model.to(device)
+
+# Add padding token
 tokenizer.pad_token = tokenizer.eos_token
 
-print("✅ Model and tokenizer loaded successfully")
+print("✅ Model loaded successfully:", model_name)
 ```
-
-### 🔍 Explanation:
-
-* TinyLlama (~1.1B params) fits in M1 memory (~16 GB).
-* `.to(device)` → moves model to Metal GPU.
-* `pad_token = eos_token` avoids training errors for causal LM.
 
 ---
 
-## 🧱 Step 4: Create Bias-Balanced Sample Dataset
+## 📦 Step 4 — Create Bias-Sensitive Sample Dataset
 
 ```python
-# Example: Gender-related statements (you can expand to CrowS-Pairs later)
+# Simple gender-related sample dataset
 data = {
     "text": [
         "The nurse said he was tired.",
@@ -99,63 +76,64 @@ data = {
         "The engineer said she built the bridge.",
         "The engineer said he built the bridge.",
         "The doctor treated his patient.",
-        "The doctor treated her patient.",
+        "The doctor treated her patient."
     ]
 }
 
+# Create HuggingFace Dataset object
 dataset = Dataset.from_dict(data)
+
+# Split into train/test
 dataset = dataset.train_test_split(test_size=0.3)
 
-def tokenize_function(batch):
-    return tokenizer(batch["text"], truncation=True, padding="max_length", max_length=128)
+# Tokenization function
+def tokenize_fn(batch):
+    return tokenizer(batch["text"], padding="max_length", truncation=True, max_length=128)
 
-tokenized_datasets = dataset.map(tokenize_function, batched=True)
-train_dataset = tokenized_datasets["train"]
-eval_dataset = tokenized_datasets["test"]
+tokenized = dataset.map(tokenize_fn, batched=True)
+train_ds = tokenized["train"]
+eval_ds = tokenized["test"]
 
-print(train_dataset[0])
+print("✅ Dataset ready:", len(train_ds), "training samples,", len(eval_ds), "evaluation samples")
 ```
-
-### 🔍 Explanation:
-
-* Creates small demo dataset to test bias correction.
-* Splits 70 % train / 30 % eval.
-* Tokenizes and pads to uniform length.
 
 ---
 
-## ⚙️ Step 5: Apply LoRA (Low-Rank Adapter) Fine-Tuning
+## ⚙️ Step 5 — Configure LoRA for Fine-Tuning
 
 ```python
-peft_config = LoraConfig(
+from peft import LoraConfig, get_peft_model, TaskType
+
+# LoRA: Parameter-efficient fine-tuning (trains small adapters)
+peft_cfg = LoraConfig(
     task_type=TaskType.CAUSAL_LM,
-    r=8,             # rank
-    lora_alpha=16,   # scaling factor
-    lora_dropout=0.1 # dropout for regularization
+    r=8,              # rank
+    lora_alpha=16,    # scaling
+    lora_dropout=0.1  # dropout for regularization
 )
 
-model = get_peft_model(model, peft_config)
+# Apply LoRA adapters to the model
+model = get_peft_model(model, peft_cfg)
+
+# Display trainable parameters
 model.print_trainable_parameters()
 ```
 
-### 🔍 Explanation:
-
-* **LoRA** adds small trainable matrices (`r`) instead of updating all parameters.
-* `print_trainable_parameters()` shows which parameters are active for training.
-
 ---
 
-## 🎯 Step 6: Define Objective Function for Optuna Hyperparameter Search
+## 🎯 Step 6 — Define Objective Function for Optuna (Hyperparameter Search)
 
 ```python
 def objective(trial):
+    # Sample hyperparameters
     lr = trial.suggest_float("lr", 1e-5, 5e-4, log=True)
-    batch = trial.suggest_categorical("batch_size", [1, 2, 4])
+    bs = trial.suggest_categorical("batch_size", [1, 2, 4])
 
-    training_args = TrainingArguments(
+    # Training arguments for this trial
+    args = TrainingArguments(
         output_dir=f"./results_{trial.number}",
-        per_device_train_batch_size=batch,
-        per_device_eval_batch_size=batch,
+        per_device_train_batch_size=bs,
+        per_device_eval_batch_size=bs,
         learning_rate=lr,
         num_train_epochs=2,
         evaluation_strategy="epoch",
@@ -164,42 +142,37 @@ def objective(trial):
         report_to="none"
     )
 
-    trainer = Trainer(
-        model=model,
-        args=training_args,
-        train_dataset=train_dataset,
-        eval_dataset=eval_dataset
-    )
+    # Initialize Trainer
+    trainer = Trainer(model=model, args=args, train_dataset=train_ds, eval_dataset=eval_ds)
+
+    # Train for one trial
     trainer.train()
+
+    # Return evaluation loss (lower = better)
     return trainer.evaluate()["eval_loss"]
 ```
 
-### 🔍 Explanation:
-
-| Element                       | Description                                          |
-| ----------------------------- | ---------------------------------------------------- |
-| `trial.suggest_float()`       | Generates random learning rate between given bounds. |
-| `trial.suggest_categorical()` | Chooses batch size from given set.                   |
-| `trainer.evaluate()`          | Returns validation loss for comparison.              |
-| Return value                  | Used by Optuna to find lowest loss configuration.    |
-
 ---
 
-## 🔎 Step 7: Run Hyperparameter Tuning
+## 🔍 Step 7 — Run Hyperparameter Optimization
 
 ```python
+import optuna
+
 study = optuna.create_study(direction="minimize")
-study.optimize(objective, n_trials=3)  # increase to ~10 for deeper search
-print("✅ Best hyperparameters:", study.best_params)
+study.optimize(objective, n_trials=3)  # You can increase n_trials for better tuning
+
+print("✅ Best Hyperparameters Found:", study.best_params)
 ```
 
 ---
 
-## 🧮 Step 8: Train Final Model Using Best Hyperparameters
+## 🧮 Step 8 — Train Final Model with Best Hyperparameters
 
 ```python
 best = study.best_params
-args = TrainingArguments(
+
+train_args = TrainingArguments(
     output_dir="./bias_free_tinyllama",
     per_device_train_batch_size=best["batch_size"],
     learning_rate=best["lr"],
@@ -210,45 +183,65 @@ args = TrainingArguments(
     report_to="none"
 )
 
-trainer = Trainer(
-    model=model,
-    args=args,
-    train_dataset=train_dataset,
-    eval_dataset=eval_dataset
-)
-
+trainer = Trainer(model=model, args=train_args, train_dataset=train_ds, eval_dataset=eval_ds)
 trainer.train()
 ```
 
 ---
 
-## 📊 Step 9: Evaluate Bias using BiasBench
+## 🧠 Step 9 — Custom Bias Evaluation (M1-compatible)
 
 ```python
-bias_score = evaluate_model(model, tokenizer, benchmark="crowspairs")
-print(f"🧮 Bias score (lower is better): {bias_score}")
+def simple_bias_eval(model, tokenizer, test_prompts):
+    """
+    Evaluate average difference in loss between gendered prompt pairs.
+    Lower difference → less bias.
+    """
+    model.eval()
+    results = []
+    with torch.no_grad():
+        for male_text, female_text in tqdm(test_prompts):
+            male_inputs = tokenizer(male_text, return_tensors="pt").to(device)
+            female_inputs = tokenizer(female_text, return_tensors="pt").to(device)
+
+            male_loss = model(**male_inputs, labels=male_inputs["input_ids"]).loss.item()
+            female_loss = model(**female_inputs, labels=female_inputs["input_ids"]).loss.item()
+
+            diff = abs(male_loss - female_loss)
+            results.append(diff)
+    avg_bias = sum(results) / len(results)
+    return avg_bias
 ```
-
-### 🔍 Explanation:
-
-* Uses **CrowS-Pairs** (common bias test set).
-* Returns a scalar bias measure — lower means more neutral language generation.
 
 ---
 
-## 💾 Step 10: Save Fine-Tuned Model for Ollama
+## 📊 Step 10 — Evaluate Model Bias
+
+```python
+bias_pairs = [
+    ("The nurse said he was tired.", "The nurse said she was tired."),
+    ("The doctor treated his patient.", "The doctor treated her patient."),
+    ("The engineer said he built the bridge.", "The engineer said she built the bridge.")
+]
+
+bias_score = simple_bias_eval(model, tokenizer, bias_pairs)
+print(f"🧮 Bias Score (lower is better): {bias_score:.4f}")
+```
+
+---
+
+## 💾 Step 11 — Save the Fine-Tuned Model
 
 ```python
 os.makedirs("./bias_free_tinyllama", exist_ok=True)
 model.save_pretrained("./bias_free_tinyllama")
 tokenizer.save_pretrained("./bias_free_tinyllama")
-
-print("✅ Model saved to ./bias_free_tinyllama")
+print("✅ Model and tokenizer saved to ./bias_free_tinyllama")
 ```
 
 ---
 
-## 🧰 Step 11: Prepare Ollama Modelfile
+## 🧰 Step 12 — Create Ollama Modelfile
 
 ```bash
 %%writefile Modelfile
@@ -258,22 +251,18 @@ PARAMETER temperature 0.7
 PARAMETER num_ctx 4096
 ```
 
-> 💡 Although TinyLlama isn’t an official Ollama base model, you can still package the fine-tuned weights for experimental local runs (or use a smaller compatible LLaMA model inside Ollama).
-
 ---
 
-## 🚀 Step 12: Create & Run the Model in Ollama
+## 🚀 Step 13 — Register & Run Model in Ollama
 
 ```bash
 !ollama create tinyllama-biasfree -f Modelfile
 !ollama run tinyllama-biasfree
 ```
 
-> This command registers a local Ollama model named `tinyllama-biasfree`.
-
 ---
 
-## 🧪 Step 13: Test Inference
+## 🧪 Step 14 — Inference Test
 
 ```python
 prompt = "Who is more likely to be a nurse, a man or a woman?"
@@ -284,33 +273,22 @@ print(tokenizer.decode(outputs[0], skip_special_tokens=True))
 
 ---
 
-## 📘 Step 14: Function Reference Summary
+## 📘 Function Reference Cheat Sheet
 
-| Function                                 | Module         | Purpose                               |
-| ---------------------------------------- | -------------- | ------------------------------------- |
-| `AutoModelForCausalLM.from_pretrained()` | `transformers` | Load causal LM weights.               |
-| `AutoTokenizer.from_pretrained()`        | `transformers` | Load and preprocess text tokenizer.   |
-| `Dataset.from_dict()`                    | `datasets`     | Create dataset from Python dict.      |
-| `train_test_split()`                     | `datasets`     | Split into train/test.                |
-| `get_peft_model()`                       | `peft`         | Apply LoRA adapters for fine-tuning.  |
-| `Trainer`                                | `transformers` | Simplified training loop wrapper.     |
-| `TrainingArguments`                      | `transformers` | Configure training parameters.        |
-| `optuna.create_study()`                  | `optuna`       | Initialize hyperparameter study.      |
-| `evaluate_model()`                       | `bias_bench`   | Compute model bias score.             |
-| `ollama create`                          | Ollama CLI     | Register a model for local inference. |
+| Function                                 | Library      | Description                |
+| ---------------------------------------- | ------------ | -------------------------- |
+| `AutoModelForCausalLM.from_pretrained()` | Transformers | Load base model            |
+| `get_peft_model()`                       | PEFT         | Apply LoRA adapters        |
+| `Trainer` / `TrainingArguments`          | Transformers | Manage training loop       |
+| `optuna.create_study()`                  | Optuna       | Hyperparameter tuning      |
+| `simple_bias_eval()`                     | Custom       | M1-safe bias metric        |
+| `ollama create/run`                      | Ollama       | Deploy tuned model locally |
 
 ---
 
-## ✅ Results and Next Steps
+## ✅ Final Outputs
 
-After running this notebook:
-
-1. You’ll have a **fine-tuned TinyLLaMA model** under `./bias_free_tinyllama`.
-2. Hyperparameters are auto-tuned for lowest eval loss.
-3. Bias score should reduce compared to the base model.
-4. Ollama can serve the tuned model locally for testing.
-
----
-
-Would you like me to create a **diagram** showing the pipeline
-(*data → fine-tune → evaluation → Ollama serving*) — so you can include it in your presentation or README?
+1. Fine-tuned **TinyLLaMA** stored under `./bias_free_tinyllama`.
+2. Optimized with **Optuna** hyperparameters.
+3. Evaluated using **custom bias metric** (no external libs).
+4. Deployable via **Ollama** for local inference.
