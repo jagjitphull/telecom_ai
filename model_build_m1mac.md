@@ -15,8 +15,12 @@ Everything runs natively on Metal (`mps`) and integrates with Ollama for deploym
 
 ```python
 # Install core libraries
-!pip install -q torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu
-!pip install -q transformers peft bitsandbytes datasets optuna bias-bench accelerate
+#!pip install -q torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu
+#!pip install -q transformers peft bitsandbytes datasets optuna bias-bench accelerate
+
+!pip install -q torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+!pip install -q transformers peft bitsandbytes datasets optuna accelerate
+
 
 # Check for Metal backend
 import torch
